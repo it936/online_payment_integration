@@ -27,8 +27,6 @@ Route::post('/payment/cancel', [PaymentController::class, 'cancelResponse']);
 //Route::post('/payment/response', [PaymentController::class, 'paymentResponse']);
 Route::post('/payment/response', [PaymentController::class, 'paymentResponse']);
 Route::post('/payment/redirect', [PaymentController::class, 'redirectResponse']);
-
-
 //Route::post('/payment/cancel', [PaymentController::class, 'cancelResponse'])->name('payment.cancel');
 //Route::get('/res', 'PaymentController@res')->name('res');
 //Route::post('/payform', [PaymentController::class, 'getPayForm']);

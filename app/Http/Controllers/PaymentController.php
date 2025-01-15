@@ -49,8 +49,7 @@ class PaymentController extends Controller
     public function initiatePayment(Request $request)
     {
      //   dd($request);
-      
-          
+        
     $tid = time().random_int(1000, 9999);   
     $order_id =time(). random_int(1000, 9999);
     $merchant_id = 3147015;
@@ -66,7 +65,9 @@ class PaymentController extends Controller
           $req_redirect_url=$request['redirect_url'];  
           $billing_name=$request['billing_name'];
           $billing_email=$request['billing_email'];
-          $billing_tel=$request['billing_tel'];          
+          $billing_tel=$request['billing_tel'];
+          $billing_zip=$request['billing_zip'];   
+          $billing_city=$request['billing_city'];
           $merchant_param1=$request['merchant_param1'];  
           // university service
           $merchant_param2=$request['merchant_param2']; 
@@ -109,6 +110,9 @@ class PaymentController extends Controller
         'redirect_url' => $req_redirect_url,        
         'created_at' => now(), // Optional: Include timestamps if the table has them
         'updated_at' => now(), // Optional
+        'billing_zip' => $billing_zip, // mandatory
+        'billing_city' => $billing_city, // mandatory       
+        
     ];
 
     // Insert data into the database
