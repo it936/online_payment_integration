@@ -446,6 +446,7 @@ public function redirectResponse_Same(Request $request)
         dd(response()->json($response));
         return response()->json($response);
     }
+    // Payment Interface
     public function paymentInitiate()
     {
         dd('nnn');
