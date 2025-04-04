@@ -42,12 +42,32 @@ class PaymentController extends Controller
          return view('ccavenue.payform');
         
     }
+    public function getStatusForm(Request $request)
+    {
+               
+         return view('ccavenue.status');
+        
+    }
     public function initiatePayment2(Request $request)
     {
         dd('xsxx');
+
+    }
+    // Check status for 
+    public function checkStatus(Request $request)
+    {
+        dd('hello');
+        $merchant_id = 3147015;
+        $tid=$request['tid'];
+        $order_id=$request['order_id'] ;
+        $merchant_id=$request['merchant_id'] ;
+
+
+
     }
     public function initiatePayment(Request $request)
     {
+     
      //   dd($request);
         
     $tid = time().random_int(1000, 9999);   
@@ -55,11 +75,13 @@ class PaymentController extends Controller
     $merchant_id = 3147015;
     $cancel_url = 'https://payment.ssus.ac.in/payment/cancel';
     $redirect_url='https://payment.ssus.ac.in/payment/redirect';
+
     
           unset($request['_token']);
           $request['tid'] =  $tid;
           $request['order_id'] = $order_id; 
           $request['merchant_id'] =  $merchant_id;
+          $fee_splitup= $request['fee_splitup'];
           $amount=$request['amount'];          
           $req_cancel_url= $request['cancel_url'];
           $req_redirect_url=$request['redirect_url'];  
@@ -68,26 +90,22 @@ class PaymentController extends Controller
           $billing_tel=$request['billing_tel'];
           $billing_zip=$request['billing_zip'];   
           $billing_city=$request['billing_city'];
-          $merchant_param1=$request['merchant_param1'];  
-          // university service
-          $merchant_param2=$request['merchant_param2']; 
-          
+          $merchant_param1=$request['merchant_param1'];           
+          $merchant_param2=$request['merchant_param2'];    // university service        
           if (!isset($merchant_param2)) {
+                  
                     $merchant_param2='TEST FEE';
+
             }
           $merchant_param3=$request['merchant_param3'];   
           if (!isset($merchant_param3)) {
-                 $merchant_param3='TEST REG NO';
-                 
-            }
-          
+
+                 $merchant_param3='TEST REG NO';                 
+           }          
           $merchant_param3=$request['merchant_param3'];   
-          //////
           $request['cancel_url']=$cancel_url;
           $request['redirect_url']=$redirect_url;
-          $merchant_data = '';
-          
-          
+          $merchant_data = '';   
     
 
     // Prepare the data to insert
@@ -97,12 +115,12 @@ class PaymentController extends Controller
         'merchant_id' => $merchant_id,
         'merchantid'=> $merchant_id,
         'trans_amt' => $amount,
-        'amount' => $amount,
-        'client_code' => $merchant_param1,
+        'amount' => $amount,        
         'merchant_param1_app_id' => $merchant_param1,
         'ucity_service' => $merchant_param2,   
         'merchant_param2_ucity_service' => $merchant_param2,
         'merchant_param3_regno' => $merchant_param3,
+        'client_code' => $merchant_param3,
         'billing_name'=> $billing_name,
         'billing_email'=> $billing_email,
         'billing_tel'=> $billing_tel,        
@@ -111,13 +129,25 @@ class PaymentController extends Controller
         'created_at' => now(), // Optional: Include timestamps if the table has them
         'updated_at' => now(), // Optional
         'billing_zip' => $billing_zip, // mandatory
-        'billing_city' => $billing_city, // mandatory       
+        'billing_city' => $billing_city, // mandatory 
+        'fee_splitup' =>   $fee_splitup,   
         
     ];
 
-    // Insert data into the database
-    DB::table('tbz_ccavenue_txns')->insert($data);
-       
+  
+        // Insert data into the database
+
+        $fees = json_decode($fee_splitup, true);
+        DB::table('tbz_ccavenue_txns')->insert($data);           
+        foreach ($fees as $feeType => $amount) {
+            DB::table('fee.ccavenue_txn_details')->insert([
+                'det_fee_desc' => $feeType,
+                'det_fee_amount' => $amount,
+                'det_order_id' => $order_id,
+                
+            ]);
+        }
+            
         foreach ($request->all() as $key => $value) {
             
             $merchant_data .= $key . '=' . $value . '&';
@@ -125,7 +155,7 @@ class PaymentController extends Controller
         
       //   dd($merchant_data);
         
-        
+     
           
         $encrypted_data = CryptoHelper::encrypt($merchant_data, $this->working_key);    
         //    dd($encrypted_data);
@@ -215,6 +245,8 @@ return response($html);
             
        // return view('ccavenue.payment', compact('production_url','encrypted_data','access_code','purl'));
     }
+
+
     public function res(Request $request)
     {  
         dd($request->encResp);
@@ -231,12 +263,13 @@ public function cancelResponse(Request $request)
 {
     // Log all request data for debugging
       \Log::info('Cancel URL Response:', $request->all());
-
+   
     // Check if encResp exists
     if ($request->has('encResp')) {
         $encResp = $request->input('encResp');
-
+       
         $decryptedResponse = CryptoHelper::decrypt($request->encResp, $this->working_key);    
+        //dd($decryptedResponse);
         parse_str($decryptedResponse, $responseArray);
         
         $order_id=$responseArray['order_id'];
@@ -252,26 +285,28 @@ public function cancelResponse(Request $request)
                   $cancel_url='';
                   $redirect_url='';
                   foreach ($transactions as $transaction){
-                      
+
                      $redirect_url =$transaction->redirect_url;
                      $cancel_url =$transaction->cancel_url;
                                        
                   }      
-                  
-                  
+                 
             $targetUrl = $redirect_url; // Replace with actual URL
             $respArray = [
                             'order_status' => $responseArray['order_status'],
                             'order_id' => $responseArray['order_id'],
                             'merchant_param1' => $responseArray['merchant_param1'],
                             'merchant_param2' => $responseArray['merchant_param2'],
+                            'merchant_param3' => $responseArray['merchant_param3'],
                             'tracking_id' =>  $responseArray['tracking_id'],                               
                         ];           
-            
+                        
+                        // dd( $respArray);
             // Append response details as query parameters
             $redirectUrl = $targetUrl . '?' . http_build_query($respArray);
+            // dd($redirectUrl);
             // Redirect to the target project
-         ///   return redirect()->away($redirectUrl);
+            return redirect()->away($redirectUrl);
            
          
          // Process the decrypted response
@@ -282,6 +317,7 @@ public function cancelResponse(Request $request)
 //        ]);
             
     } else {
+      //  dd($request);
         return response()->json([
             'status' => 'error',
             'message' => 'No encResp received on cancel.',
@@ -358,6 +394,7 @@ public function redirectResponse(Request $request)
                             'order_id' => $responseArray['order_id'],
                             'merchant_param1' => $responseArray['merchant_param1'],
                             'merchant_param2' => $responseArray['merchant_param2'],
+                            'merchant_param3' => $responseArray['merchant_param3'],
                             'tracking_id' =>  $responseArray['tracking_id'],                               
                         ];           
             

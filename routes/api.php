@@ -24,7 +24,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::match(['get', 'post'], '/payment/initiate', [PaymentController::class, 'initiatePayment']);
 
+
+
 Route::match(['get', 'post'], '/payment/initiate2', [PaymentController::class, 'initiatePayment2']);
+
+Route::match(['get', 'post'], '/payment/status', [PaymentController::class, 'checkStatus']);
 
 
 
