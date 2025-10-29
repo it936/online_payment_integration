@@ -51,6 +51,11 @@ class CryptoHelper {
      */
     private static function hexToBin(string $hexString): string
     {
+         $hexString = preg_replace('/[^a-fA-F0-9]/', '', $hexString); // remove non-hex
+    return pack("H*", $hexString);
+    }
+    private static function hexToBin123(string $hexString): string
+    {
         $length = strlen($hexString);
         $binString = '';
         for ($i = 0; $i < $length; $i += 2) {

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaymentStatusController;
 
 
 
@@ -53,3 +54,5 @@ use App\Http\Controllers\AtomPaymentController;
 Route::get('/atompayment', [AtomPaymentController::class, 'createPayment'])->name('atompayment.create');
 Route::post('/atompayment/atomresponse', [AtomPaymentController::class, 'handleResponse'])->name('atompayment.response');
 Route::get('/atompayform', [AtomPaymentController::class, 'atomPayForm']);
+Route::get('/checkstatus', [PaymentController::class, 'checkStatus']);
+Route::get('/check', [PaymentStatusController::class, 'check']);

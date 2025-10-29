@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaymentStatusController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -28,7 +29,8 @@ Route::match(['get', 'post'], '/payment/initiate', [PaymentController::class, 'i
 
 Route::match(['get', 'post'], '/payment/initiate2', [PaymentController::class, 'initiatePayment2']);
 
-Route::match(['get', 'post'], '/payment/status', [PaymentController::class, 'checkStatus']);
+//Route::match(['get', 'post'], '/payment/status', [PaymentController::class, 'checkStatus']);
+Route::match(['get', 'post'], '/payment/status', [PaymentStatusController::class, 'check']);
 
 
 

@@ -11,6 +11,7 @@ class PaymentController extends Controller
 {
      private $access_code = 'AVDR35LK53CC78RDCC'; // Replace with your access code
      private $working_key = 'CBC353AEF85432D18CDA03FCF48B3D5B'; // Replace with your working key
+     private $merchant_id = 3147015;
     //
      public function initiatePayment_test(Request $request)
     {
@@ -54,19 +55,190 @@ class PaymentController extends Controller
 
     }
     // Check status for 
-    public function checkStatus(Request $request)
+    public function checkStatus1(Request $request)
     {
-        dd('hello');
+       // dd('hello');
         $merchant_id = 3147015;
         $tid=$request['tid'];
         $order_id=$request['order_id'] ;
         $merchant_id=$request['merchant_id'] ;
 
-
-
+      	$order_id='113789907789';
+       
     }
+
+//use Illuminate\Support\Facades\Http;
+
+public function checkStatus()
+{
+       // Load credentials from .env
+    $workingKey = env('CCAVENUE_WORKING_KEY');
+    $accessCode = env('CCAVENUE_ACCESS_CODE');
+    $isSandbox  = env('CCAVENUE_SANDBOX', true); // true or false in .env
+
+    // Choose API URL based on environment
+    $apiUrl = $isSandbox 
+        ? 'https://test.ccavenue.com/apis/servlet/DoWebTrans'
+        : 'https://api.ccavenue.com/apis/servlet/DoWebTrans';
+
+    // Step 1: Prepare the JSON request payload
+    $requestData = [
+        "order_no" => "113789907789", // Replace with dynamic ID if needed
+    ];
+
+    // Step 2: Encrypt the payload using your CryptoHelper
+    $jsonPayload = json_encode($requestData);
+    $encryptedRequest = CryptoHelper::encrypt($jsonPayload, $workingKey);
+
+    // Step 3: Formulate the POST body
+    $postData = [
+        'enc_request'   => $encryptedRequest,
+        'access_code'   => trim($accessCode),
+        'request_type'  => 'JSON',
+        'response_type' => 'JSON',
+        'command'       => 'orderStatusTracker',
+    ];
+
+    // Step 4: Make the HTTP request
+    $ch = curl_init($apiUrl);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POSTFIELDS     => http_build_query($postData),
+        CURLOPT_POST           => true,
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/x-www-form-urlencoded']
+    ]);
+
+    $response = curl_exec($ch);
+    $curlError = curl_error($ch);
+    curl_close($ch);
+
+    // Step 5: Basic validation
+    if ($curlError) {
+        return response()->json(['error' => "cURL Error: $curlError"], 500);
+    }
+
+    // Check if response is like `status=1&enc_response=...`
+    parse_str($response, $parsedResponse);
+
+    if (!isset($parsedResponse['enc_response'])) {
+        return response()->json(['error' => 'Invalid API response', 'raw' => $response], 500);
+    }
+
+    // Step 6: Decrypt the response
+    $decrypted = CryptoHelper::decrypt($parsedResponse['enc_response'], $workingKey);
+    $decodedJson = json_decode($decrypted, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return response()->json([
+            'error' => 'Decryption or JSON decode failed',
+            'decrypted' => $decrypted,
+            'raw_response' => $response
+        ], 500);
+    }
+
+    return response()->json($decodedJson);
+}
+
+
+
+
+
+
+
+    public function checkStatus3333()
+{
+    // Example order details
+    $data = [
+      
+        "order_no"     => "17489429528261"
+    ];
+
+    // Convert array to JSON
+    $jsonRequest = json_encode($data);
+
+    // Encrypt the request JSON using your working key
+    $encrypted_data = CryptoHelper::encrypt($jsonRequest, $this->working_key);
+
+    // Prepare the POST fields for CCAvenue
+    $post_data = [
+        'enc_request'   => $encrypted_data,
+        'access_code'   => $this->access_code,
+        'request_type'  => 'JSON',
+        'response_type' => 'JSON'
+       
+    ];
+
+    // Send request using cURL
+    $ch = curl_init('https://secure.ccavenue.com/transaction/transaction.do?command=orderStatusTracker');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    // Decrypt response
+    $decryptedResponse = CryptoHelper::decrypt($response, $this->working_key);
+dd($decryptedResponse);
+    // Return or process the response
+    return response()->json([
+        'raw'       => $response,
+        'decrypted' => json_decode($decryptedResponse, true)
+    ]);
+}
+public function checkStatus111(Request $request)
+{ 
+   
+$order_id = '17489429528261'; // Use only one order ID
+
+// Create request string
+$request_data = "order_no=" . $order_id;
+
+// Encrypt the request using CCAvenue encryption logic
+$encrypted_data = CryptoHelper::encrypt($request_data, $this->working_key); // Replace 'encrypt' with the correct encryption function
+
+// Prepare POST data
+$post_data = [
+    'enc_request'   => $encrypted_data,
+    'access_code'   => $this->access_code,
+    'command'       => 'orderStatusTracker',
+    'request_type'  => 'JSON',
+    'response_type' => 'JSON'
+];
+
+// Send request to CCAvenue endpoint
+$ch = curl_init('https://secure.ccavenue.com/transaction/getOrderStatus');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
+$response = curl_exec($ch);
+curl_close($ch);
+
+// Decrypt the response
+$decrypted_response = CryptoHelper::decrypt($response, $this->working_key); // Replace 'decrypt' with actual CCAvenue decrypt logic
+
+// Show the decrypted response
+dd($decrypted_response);
+
+// Optionally convert to array if needed (JSON case)
+$response_array = json_decode($decrypted_response, true);
+
+
+
+
+}
+
     public function initiatePayment(Request $request)
     {
+        
+
+        if (isset($request['sub_account_id'])) {
+                $sub_account_id = $request['sub_account_id'];
+              //  return $sub_account_id;
+
+            }
+            else
+            {
+                return ' Sub Account ID not found !!!!! ';
+            }
+
      
      //   dd($request);
         
@@ -74,9 +246,7 @@ class PaymentController extends Controller
     $order_id =time(). random_int(1000, 9999);
     $merchant_id = 3147015;
     $cancel_url = 'https://payment.ssus.ac.in/payment/cancel';
-    $redirect_url='https://payment.ssus.ac.in/payment/redirect';
-
-    
+    $redirect_url='https://payment.ssus.ac.in/payment/redirect';    
           unset($request['_token']);
           $request['tid'] =  $tid;
           $request['order_id'] = $order_id; 
@@ -92,9 +262,11 @@ class PaymentController extends Controller
           $billing_city=$request['billing_city'];
           $merchant_param1=$request['merchant_param1'];           
           $merchant_param2=$request['merchant_param2'];    // university service        
+         
+          
           if (!isset($merchant_param2)) {
                   
-                    $merchant_param2='TEST FEE';
+                $merchant_param2='TEST FEE';
 
             }
           $merchant_param3=$request['merchant_param3'];   
@@ -130,14 +302,16 @@ class PaymentController extends Controller
         'updated_at' => now(), // Optional
         'billing_zip' => $billing_zip, // mandatory
         'billing_city' => $billing_city, // mandatory 
-        'fee_splitup' =>   $fee_splitup,   
-        
+        'fee_splitup' =>   $fee_splitup,
+        'sub_account_id' => $sub_account_id,
+                
     ];
 
   
         // Insert data into the database
 
         $fees = json_decode($fee_splitup, true);
+       // dd($fees);
         DB::table('tbz_ccavenue_txns')->insert($data);           
         foreach ($fees as $feeType => $amount) {
             DB::table('fee.ccavenue_txn_details')->insert([
