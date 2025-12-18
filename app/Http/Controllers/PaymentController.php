@@ -239,6 +239,34 @@ $response_array = json_decode($decrypted_response, true);
                 return ' Sub Account ID not found !!!!! ';
             }
 
+            // splitup validation
+                    $paid_fee = $request['amount'];
+                    $fee_splitup1= $request['fee_splitup'];
+                    $fees = json_decode($fee_splitup1, true);
+
+                    // Validate JSON
+                    if (!is_array($fees)) {
+                        return 'Invalid fee splitup data';
+                    }
+
+                    // Remove totalfee if exists
+                    unset($fees['totalfee']);
+
+                    $split_tot = 0.0;
+
+                    foreach ($fees as $feeType => $amount) {
+                        $split_tot += (float) $amount;
+                    }
+
+                    // Optional: round to avoid floating point mismatch
+                    $split_tot = round($split_tot, 2);
+                    $paid_fee  = round((float) $paid_fee, 2);
+
+                    if ($paid_fee !== $split_tot) {
+                        return 'Fee Splitup not match. Please contact ssus IT Section !!!  Phone Number : 0484 2699731' ;
+                    }
+            // validation ends
+
      
      //   dd($request);
         
@@ -261,19 +289,31 @@ $response_array = json_decode($decrypted_response, true);
           $billing_zip=$request['billing_zip'];   
           $billing_city=$request['billing_city'];
           $merchant_param1=$request['merchant_param1'];           
-          $merchant_param2=$request['merchant_param2'];    // university service        
+          $merchant_param2=$request['merchant_param2'];    // university service     
          
-          
           if (!isset($merchant_param2)) {
                   
-                $merchant_param2='TEST FEE';
+                $merchant_param2='TEST MERCHANT 2';
 
             }
           $merchant_param3=$request['merchant_param3'];   
           if (!isset($merchant_param3)) {
 
-                 $merchant_param3='TEST REG NO';                 
-           }          
+                 $merchant_param3='TEST MERCHANT 3';                 
+           }     
+           
+          $merchant_param4=$request['merchant_param4'];
+          if (!isset($merchant_param4)) {
+
+                 $merchant_param4='TEST MERCHANT 4';                 
+           }    
+          $merchant_param5=$request['merchant_param5'];
+
+          if (!isset($merchant_param5)) {
+
+                 $merchant_param5='TEST MERCHANT 5';                 
+           }    
+
           $merchant_param3=$request['merchant_param3'];   
           $request['cancel_url']=$cancel_url;
           $request['redirect_url']=$redirect_url;
@@ -304,6 +344,9 @@ $response_array = json_decode($decrypted_response, true);
         'billing_city' => $billing_city, // mandatory 
         'fee_splitup' =>   $fee_splitup,
         'sub_account_id' => $sub_account_id,
+        'merchant_param4_dept_sl' => $merchant_param4,
+        'merchant_param5_centre_sl' => $merchant_param5,
+
                 
     ];
 
