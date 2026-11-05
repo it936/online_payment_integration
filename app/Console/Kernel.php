@@ -13,6 +13,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // $schedule->command('inspire')->hourly();
+         //$schedule->command('cron:test')->everyMinute();
+         $schedule->command('ccavenue:check-status')->everyMinute();
     }
 
     /**
@@ -23,5 +25,8 @@ class Kernel extends ConsoleKernel
         $this->load(__DIR__.'/Commands');
 
         require base_path('routes/console.php');
+
     }
 }
+
+// * * * * * php /var/www/html/mywebsiteproject/artisan schedule:run >> /dev/null 2>&1

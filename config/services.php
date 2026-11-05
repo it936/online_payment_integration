@@ -30,5 +30,10 @@ return [
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
+    'ccavenue' => [
+    'working_key' => env('CCAVENUE_WORKING_KEY'),
+    'access_code' => env('CCAVENUE_ACCESS_CODE'),
+],
+
 
 ];

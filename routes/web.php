@@ -56,3 +56,4 @@ Route::post('/atompayment/atomresponse', [AtomPaymentController::class, 'handleR
 Route::get('/atompayform', [AtomPaymentController::class, 'atomPayForm']);
 Route::get('/checkstatus', [PaymentController::class, 'checkStatus']);
 Route::get('/check', [PaymentStatusController::class, 'check']);
+Route::get('/bulkcheck', [PaymentStatusController::class, 'bulkcheck']);

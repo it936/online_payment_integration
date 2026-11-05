@@ -21,15 +21,76 @@ class PaymentStatusController extends Controller
         $this->accessCode = 'AVDR35LK53CC78RDCC';
        
     }
-    public function check(Request $request)
-
-
+public function bulkcheck(Request $request)
 {
 //dd($request);
 
 $this->workingKey = '615717775ADFA47A79451673555A2642';
 $this->accessCode = 'AVDY79MF57BN32YDNB';  
 $orderId = $request->get('order_id') ?? '512721732881283';
+$requestPayload = [   
+'order_no' =>  $orderId,   
+];
+$update_data='';
+$requestData = json_encode($requestPayload);
+$encRequest =CryptoHelper::encrypt($requestData, $this->workingKey);
+$url = 'https://api.ccavenue.com/apis/servlet/DoWebTrans';
+$params = http_build_query([
+    'enc_request'   => $encRequest,
+    'access_code'   => $this->accessCode,
+    'request_type'  => 'JSON',
+    'response_type' => 'JSON',
+    'command'       => 'orderStatusTracker',
+    'version'       => '1.2',
+]);
+$fullUrl = $url . '?' . $params;
+$response = Http::asForm()->post($fullUrl); 
+$body = $response->body();
+parse_str($body, $parsed);
+// Now you can access enc_response
+if (isset($parsed['enc_response'])) {
+    $encResponse = $parsed['enc_response'];
+    $drs = CryptoHelper::decrypt($encResponse, $this->workingKey);
+    $data = json_decode($drs, true);  
+    $order_status = $data['order_status'] ?? null;
+    $order_id=$data['order_no'];
+    $update_data = [
+    'order_status'   => $data['order_status'],
+    'bank_ref_no'    => $data['order_bank_ref_no'],
+    'status_message' => $data['order_bank_response'],
+    'updated_at'     => now(),
+                   ];
+                   
+if (!empty($order_id) && isset($data['order_status'])) 
+{
+    DB::table('tbz_ccavenue_txns')
+        ->where('order_id', $order_id)
+        ->update($update_data);
+}
+$update_data['order_no'] = $data['order_no'];
+return ($update_data);
+
+
+}
+else
+{
+    return 'Error !!!!';
+} 
+
+}
+
+
+ public function check(Request $request)
+
+
+{
+//dd($request);
+// 512721732881283
+// 136961732816183
+
+$this->workingKey = '615717775ADFA47A79451673555A2642';
+$this->accessCode = 'AVDY79MF57BN32YDNB';  
+$orderId = $request->get('order_id') ?? '136961732816183';
 $requestPayload = [   
 'order_no' =>  $orderId,   
 ];

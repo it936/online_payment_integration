@@ -227,7 +227,13 @@ $response_array = json_decode($decrypted_response, true);
 
     public function initiatePayment(Request $request)
     {
-        
+        DB::statement("UPDATE tbz_ccavenue_txns
+        SET order_status = s.transaction_type
+        FROM fee.cca_set s
+        WHERE tbz_ccavenue_txns.order_id = s.order_id
+        AND tbz_ccavenue_txns.order_status <> s.transaction_type"
+        );
+
 
         if (isset($request['sub_account_id'])) {
                 $sub_account_id = $request['sub_account_id'];
